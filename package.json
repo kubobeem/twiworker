@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "wrangler pages dev public --binding",
     "deploy": "wrangler pages deploy public",
-    "db:migrate": "wrangler d1 execute twiworker-db --file=migrations/0000_init.sql",
+    "db:migrate": "wrangler d1 execute twiworker-db --remote --file=migrations/0000_init.sql",
+    "db:migrate:local": "wrangler d1 execute twiworker-db --local --file=migrations/0000_init.sql",
     "types": "wrangler types"
   },
   "dependencies": {

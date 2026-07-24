@@ -1,5 +1,7 @@
 # twiworker 🐦
 
+> **🌐 English version available → [README.en.md](README.en.md)**
+
 **Cloudflare Pages + Functions で動く Twitter/X クライアント**
 
 クッキーベースの認証で Twitter 内部 API（GraphQL）にアクセスし、ツイートの投稿・削除・検索、タイムライン表示、DM送信、トレンド取得などをブラウザから操作できる Web アプリケーションです。

@@ -1,5 +1,7 @@
 # twiworker 🐦
 
+> **🇯🇵 日本語版はこちら → [README.md](README.md)**
+
 **Twitter/X Client running on Cloudflare Pages + Functions**
 
 A web application that accesses Twitter's internal GraphQL API using cookie-based authentication. Post, delete, and search tweets, view timelines, send DMs, and fetch trends — all from your browser.

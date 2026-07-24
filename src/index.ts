@@ -17,6 +17,7 @@ import { TimelineHandler } from './handlers/timeline';
 import { UserHandler } from './handlers/user';
 import { TrendsHandler } from './handlers/trends';
 import { DmHandler } from './handlers/dm';
+import { InteractionHandler } from './handlers/interaction';
 import { CronHandler } from './handlers/cron';
 import { AdminHandler } from './handlers/admin';
 
@@ -56,11 +57,49 @@ function getHandlers(c: any) {
     user: new UserHandler(client),
     trends: new TrendsHandler(client, d1),
     dm: new DmHandler(client, d1),
+    interaction: new InteractionHandler(client),
     cron: new CronHandler(client, d1),
     admin: new AdminHandler(client, c.env, kv, d1),
     client, d1,
   };
 }
+
+// ---- インタラクション（いいね・リポスト・フォロー）----
+app.post('/api/tweet/:id/like', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.likeTweet(c);
+});
+
+app.post('/api/tweet/:id/unlike', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.unlikeTweet(c);
+});
+
+app.post('/api/tweet/:id/retweet', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.retweet(c);
+});
+
+app.post('/api/tweet/:id/unretweet', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.unretweet(c);
+});
+
+app.post('/api/follow/:id', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.followUser(c);
+});
+
+app.post('/api/unfollow/:id', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.unfollowUser(c);
+});
 
 // ---- 管理系 ----
 app.get('/api/health', async (c) => {

@@ -75,6 +75,7 @@ function fmtRel(s) {
 
 function renderTweet(t) {
   const u = t.user || {};
+  const id = t.id;
   const card = document.createElement('div');
   card.className = 'tweet-card';
   card.innerHTML = `
@@ -84,15 +85,89 @@ function renderTweet(t) {
         <div class="tweet-user">${esc(u.name || u.screen_name || '不明')}</div>
         <div class="tweet-screen-name">@${esc(u.screen_name || '')}</div>
       </div>
+      <div style="margin-left:auto;font-size:12px;color:var(--text-muted)">${fmtRel(t.created_at)}</div>
     </div>
     <div class="tweet-text">${esc(t.text)}</div>
     <div class="tweet-meta">
-      <span>❤️ ${fmtNum(t.like_count)}</span>
-      <span>🔄 ${fmtNum(t.retweet_count)}</span>
-      <span>💬 ${fmtNum(t.reply_count)}</span>
+      <span class="tweet-action" data-action="reply" data-id="${id}">💬 ${fmtNum(t.reply_count)}</span>
+      <span class="tweet-action" data-action="retweet" data-id="${id}">🔄 ${fmtNum(t.retweet_count)}</span>
+      <span class="tweet-action" data-action="like" data-id="${id}">❤️ ${fmtNum(t.like_count)}</span>
       ${t.view_count ? `<span>👁️ ${fmtNum(t.view_count)}</span>` : ''}
-      <span>🕐 ${fmtRel(t.created_at)}</span>
+    </div>
+    <div class="tweet-actions" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);gap:6px">
+      <input class="form-input" id="reply-input-${id}" placeholder="返信を入力..." maxlength="280" style="flex:1;padding:8px 12px;font-size:13px">
+      <button class="btn btn-primary btn-sm reply-send" data-id="${id}">送信</button>
     </div>`;
+
+  // いいねトグル
+  let liked = false;
+  card.querySelector('[data-action="like"]')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const el = e.currentTarget;
+    el.style.opacity = '0.5';
+    try {
+      let count = t.like_count || 0;
+      if (liked) {
+        await api('POST', `/api/tweet/${id}/unlike`);
+        liked = false;
+        el.innerHTML = `❤️ ${fmtNum(count)}`;
+      } else {
+        await api('POST', `/api/tweet/${id}/like`);
+        liked = true;
+        el.innerHTML = `💖 ${fmtNum(count + 1)}`;
+      }
+    } catch (err) {
+      showToast('エラー', err.message, 'error');
+    }
+    el.style.opacity = '1';
+  });
+
+  // リポストクリック
+  card.querySelector('[data-action="retweet"]')?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const el = e.currentTarget;
+    el.style.opacity = '0.5';
+    try {
+      await api('POST', `/api/tweet/${id}/retweet`);
+      el.innerHTML = `🔄 ${fmtNum((t.retweet_count || 0) + 1)}`;
+      showToast('リポストしました', '', 'success');
+    } catch (err) {
+      showToast('エラー', err.message, 'error');
+    }
+    el.style.opacity = '1';
+  });
+
+  // 返信クリック → 返信フォーム表示Toggle
+  const replySection = card.querySelector('.tweet-actions');
+  card.querySelector('[data-action="reply"]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (replySection) {
+      replySection.style.display = replySection.style.display === 'none' ? 'flex' : 'none';
+      const input = replySection.querySelector('input');
+      if (input && replySection.style.display === 'flex') input.focus();
+    }
+  });
+
+  // 返信送信
+  card.querySelector('.reply-send')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const input = document.getElementById(`reply-input-${id}`);
+    if (!input || !input.value.trim()) return;
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+    try {
+      await api('POST', '/api/tweet', { text: input.value.trim(), reply_to: id });
+      showToast('返信しました', '', 'success');
+      input.value = '';
+      if (replySection) replySection.style.display = 'none';
+    } catch (err) {
+      showToast('エラー', err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '送信';
+    }
+  });
+
   return card;
 }
 
@@ -211,6 +286,78 @@ function initNavigation() {
 }
 
 // ======================================================
+// 無限スクロール
+// ======================================================
+
+/**
+ * IntersectionObserver を使った無限スクロール
+ * @param containerEl ツイートを追加する要素
+ * @param fetchMore 追加データを取得する非同期関数。{tweets, cursor} を返す
+ * @returns クリーンアップ関数
+ */
+function setupInfiniteScroll(containerEl, fetchMore) {
+  let cursor = undefined;
+  let loading = false;
+  let hasMore = true;
+  let observer = null;
+
+  // インジケーター要素
+  const sentinel = document.createElement('div');
+  sentinel.className = 'loading';
+  sentinel.id = 'infinite-scroll-sentinel';
+  sentinel.innerHTML = '<div class="spinner"></div><span>読み込み中...</span>';
+  containerEl.after(sentinel);
+
+  function showSentinel(show) {
+    sentinel.style.display = show ? 'flex' : 'none';
+  }
+  showSentinel(false);
+
+  async function loadMore() {
+    if (loading || !hasMore) return;
+    loading = true;
+    showSentinel(true);
+    try {
+      const result = await fetchMore(cursor);
+      if (!result || !result.tweets || result.tweets.length === 0) {
+        hasMore = false;
+        showSentinel(false);
+        return;
+      }
+      result.tweets.forEach(t => containerEl.appendChild(renderTweet(t)));
+      cursor = result.cursor;
+      if (!cursor) hasMore = false;
+    } catch (err) {
+      hasMore = false;
+      sentinel.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:16px">これ以上読み込めません</p>';
+    } finally {
+      loading = false;
+      showSentinel(hasMore);
+    }
+  }
+
+  function reset(newHasMore = true) {
+    cursor = undefined;
+    hasMore = newHasMore;
+    loading = false;
+    containerEl.innerHTML = '';
+    showSentinel(false);
+  }
+
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) loadMore();
+  }, { rootMargin: '200px' });
+  observer.observe(sentinel);
+
+  // クリーンアップ関数を返す
+  return function cleanup() {
+    if (observer) observer.disconnect();
+    sentinel.remove();
+    reset(false);
+  };
+}
+
+// ======================================================
 // スケルトン
 // ======================================================
 
@@ -244,5 +391,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const fn = PAGE_INIT_FNS['dashboard'];
     delete PAGE_INIT_FNS['dashboard'];
     setTimeout(fn, 100);
+  }
+
+  // 初回アクセス免責同意モーダル
+  if (!localStorage.getItem('twiworker_disclaimer_accepted')) {
+    const modal = document.getElementById('disclaimer-modal');
+    const agreeBtn = document.getElementById('disclaimer-agree-btn');
+    const declineBtn = document.getElementById('disclaimer-decline-btn');
+    if (modal && agreeBtn) {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      function closeModal(agreed) {
+        if (agreed) {
+          localStorage.setItem('twiworker_disclaimer_accepted', 'true');
+        }
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      function closeModalAndCleanup(agreed) {
+        closeModal(agreed);
+        document.removeEventListener('keydown', onEscape);
+      }
+
+      agreeBtn.addEventListener('click', () => closeModalAndCleanup(true));
+
+      declineBtn?.addEventListener('click', () => {
+        window.location.href = 'https://www.google.com';
+      });
+
+      // Escapeキーで同意しない
+      function onEscape(e) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          declineBtn?.click();
+        }
+      }
+      document.addEventListener('keydown', onEscape);
+    }
   }
 });

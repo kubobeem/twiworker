@@ -20,11 +20,17 @@ const ENDPOINTS = {
   TweetDetail:      `${TWITTER_BASE}/i/api/graphql/U0HTv-bAWTBYylwEMT7x5A/TweetDetail`,
   Followers:        `${TWITTER_BASE}/i/api/graphql/gC_lyAxZOptAMLCJX5UhWw/Followers`,
   Following:        `${TWITTER_BASE}/i/api/graphql/2vUj-_Ek-UmBVDNtd8OnQA/Following`,
+  FavoriteTweet:    `${TWITTER_BASE}/i/api/graphql/lI07N6Otwv1PhnEgXILM7A/FavoriteTweet`,
+  UnfavoriteTweet:  `${TWITTER_BASE}/i/api/graphql/ZYKSe-w7KEslx3JhSIk5LA/UnfavoriteTweet`,
+  CreateRetweet:    `${TWITTER_BASE}/i/api/graphql/ojPdsZsimiJrUGLR1sjUtA/CreateRetweet`,
+  DeleteRetweet:    `${TWITTER_BASE}/i/api/graphql/iQtK4dl5hBmXewYZuEOKVw/DeleteRetweet`,
+  UserByRestId:     `${TWITTER_BASE}/i/api/graphql/tD8zKvQzwY3kdx5yz6YmOw/UserByRestId`,
+  UserLikes:        `${TWITTER_BASE}/i/api/graphql/IohM3gxQHfvWePH5E3KuNA/Likes`,
 };
 
 const BEARER_TOKEN = 'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
 
-/** 共通リクエストヘッダー */
+/** 共通リクエストヘッダー（2026年 Chrome 143 準拠） */
 function headers(cookies: Record<string, string>, ct0: string): Record<string, string> {
   const cookieStr = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
   return {
@@ -32,10 +38,16 @@ function headers(cookies: Record<string, string>, ct0: string): Record<string, s
     'Cookie': cookieStr,
     'X-Csrf-Token': ct0,
     'Content-Type': 'application/json',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'ja-JP,ja;q=0.9,en;q=0.8',
+    'Origin': 'https://x.com',
+    'Referer': 'https://x.com/',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Dest': 'empty',
     'X-Twitter-Active-User': 'yes',
     'X-Twitter-Client-Language': 'ja',
-    'Referer': 'https://x.com/',
   };
 }
 
@@ -164,7 +176,23 @@ export class TwitterClient {
   // 検索・タイムライン
   // ============================================================
 
-  async searchTweets(query: string, count = 20, product: 'Top' | 'Latest' | 'Media' = 'Top'): Promise<Tweet[]> {
+  /** Twitter の応答からカーソルを抽出 */
+  private extractCursor(instructions: any[]): string | undefined {
+    for (const inst of instructions) {
+      for (const entry of inst?.entries ?? []) {
+        if (entry?.entryId?.startsWith('cursor-bottom') && entry?.content?.value) {
+          return entry.content.value;
+        }
+        // 別の形式
+        if (entry?.content?.cursorType === 'Bottom' && entry?.content?.value) {
+          return entry.content.value;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  async searchTweets(query: string, count = 20, product: 'Top' | 'Latest' | 'Media' = 'Top', cursor?: string): Promise<{ tweets: Tweet[]; cursor?: string }> {
     this.assertInit();
     const variables: Record<string, unknown> = {
       rawQuery: query,
@@ -172,12 +200,16 @@ export class TwitterClient {
       querySource: 'typed_query',
       product,
     };
+    if (cursor) variables.cursor = cursor;
     const data = await this.get<any>(ENDPOINTS.SearchTimeline, variables, GENERAL_FEATURES);
     const instructions = data?.data?.search_by_raw_query?.search_timeline?.timeline?.instructions ?? [];
-    return this.extractTweets(instructions);
+    return {
+      tweets: this.extractTweets(instructions),
+      cursor: this.extractCursor(instructions),
+    };
   }
 
-  async getHomeTimeline(count = 20): Promise<Tweet[]> {
+  async getHomeTimeline(count = 20, cursor?: string): Promise<{ tweets: Tweet[]; cursor?: string }> {
     this.assertInit();
     const variables: Record<string, unknown> = {
       count,
@@ -185,9 +217,13 @@ export class TwitterClient {
       latestControlAvailable: true,
       requestContext: 'launch',
     };
+    if (cursor) variables.cursor = cursor;
     const data = await this.get<any>(ENDPOINTS.HomeTimeline, variables, GENERAL_FEATURES);
     const instructions = data?.data?.home?.home_timeline_urt?.instructions ?? [];
-    return this.extractTweets(instructions);
+    return {
+      tweets: this.extractTweets(instructions),
+      cursor: this.extractCursor(instructions),
+    };
   }
 
   // ============================================================
@@ -249,6 +285,105 @@ export class TwitterClient {
   }
 
   // ============================================================
+  // いいね / リポスト
+  // ============================================================
+
+  async likeTweet(tweetId: string): Promise<void> {
+    this.assertInit();
+    await this.post(ENDPOINTS.FavoriteTweet, { tweet_id: tweetId });
+  }
+
+  async unlikeTweet(tweetId: string): Promise<void> {
+    this.assertInit();
+    await this.post(ENDPOINTS.UnfavoriteTweet, { tweet_id: tweetId });
+  }
+
+  async retweet(tweetId: string): Promise<{ retweetId: string }> {
+    this.assertInit();
+    const data = await this.post<any>(ENDPOINTS.CreateRetweet, { tweet_id: tweetId, dark_request: false });
+    const result = data?.data?.create_retweet?.tweet_results?.result;
+    return { retweetId: result?.rest_id ?? '' };
+  }
+
+  async unretweet(tweetId: string): Promise<void> {
+    this.assertInit();
+    await this.post(ENDPOINTS.DeleteRetweet, { source_tweet_id: tweetId, dark_request: false });
+  }
+
+  // ============================================================
+  // フォロー / アンフォロー（v1.1 REST API）
+  // ============================================================
+
+  async followUser(userId: string): Promise<void> {
+    this.assertInit();
+    const res = await fetch(`https://api.twitter.com/1.1/friendships/create.json?user_id=${userId}`, {
+      method: 'POST', headers: this.hdrs,
+    });
+    if (!res.ok) throw new Error(`Follow failed: ${res.status}`);
+  }
+
+  async unfollowUser(userId: string): Promise<void> {
+    this.assertInit();
+    const res = await fetch(`https://api.twitter.com/1.1/friendships/destroy.json?user_id=${userId}`, {
+      method: 'POST', headers: this.hdrs,
+    });
+    if (!res.ok) throw new Error(`Unfollow failed: ${res.status}`);
+  }
+
+  // ============================================================
+  // ユーザーIDから情報取得
+  // ============================================================
+
+  async getUserInfoById(userId: string): Promise<TwitterUser> {
+    this.assertInit();
+    const data = await this.get<any>(ENDPOINTS.UserByRestId, {
+      userId, withSafetyModeUserFields: true,
+    });
+    const user = data?.data?.user?.result;
+    if (!user) throw new Error(`User not found: ${userId}`);
+    return {
+      id: user.rest_id ?? '',
+      screen_name: user.legacy?.screen_name ?? '',
+      name: user.legacy?.name ?? '',
+      description: user.legacy?.description,
+      followers_count: user.legacy?.followers_count ?? 0,
+      following_count: user.legacy?.friends_count ?? 0,
+      tweet_count: user.legacy?.statuses_count ?? 0,
+      profile_image_url: user.legacy?.profile_image_url_https,
+      verified: user.legacy?.verified ?? false,
+    };
+  }
+
+  async getUserLikes(userId: string, count = 20): Promise<Tweet[]> {
+    this.assertInit();
+    const data = await this.get<any>(ENDPOINTS.UserLikes, {
+      userId, count, includePromotedContent: true,
+    });
+    const instructions = data?.data?.user?.result?.timeline_v2?.timeline?.instructions ?? [];
+    return this.extractTweets(instructions);
+  }
+
+  /** フォロワー一覧を取得 */
+  async getFollowers(userId: string, count = 20): Promise<TwitterUser[]> {
+    this.assertInit();
+    const data = await this.get<any>(ENDPOINTS.Followers, {
+      userId, count, includePromotedContent: false,
+    });
+    const instructions = data?.data?.user?.result?.timeline?.instructions ?? [];
+    return this.extractUsers(instructions);
+  }
+
+  /** フォロー中一覧を取得 */
+  async getFollowing(userId: string, count = 20): Promise<TwitterUser[]> {
+    this.assertInit();
+    const data = await this.get<any>(ENDPOINTS.Following, {
+      userId, count, includePromotedContent: false,
+    });
+    const instructions = data?.data?.user?.result?.timeline?.instructions ?? [];
+    return this.extractUsers(instructions);
+  }
+
+  // ============================================================
   // DM
   // ============================================================
 
@@ -291,6 +426,29 @@ export class TwitterClient {
   // ============================================================
   // ヘルパー
   // ============================================================
+
+  private extractUsers(instructions: any[]): TwitterUser[] {
+    const users: TwitterUser[] = [];
+    for (const inst of instructions) {
+      for (const entry of inst?.entries ?? []) {
+        const result = entry?.content?.itemContent?.user_results?.result;
+        if (result?.legacy) {
+          users.push({
+            id: result.rest_id ?? '',
+            screen_name: result.legacy.screen_name ?? '',
+            name: result.legacy.name ?? '',
+            description: result.legacy.description,
+            followers_count: result.legacy.followers_count ?? 0,
+            following_count: result.legacy.friends_count ?? 0,
+            tweet_count: result.legacy.statuses_count ?? 0,
+            profile_image_url: result.legacy.profile_image_url_https,
+            verified: result.legacy.verified ?? false,
+          });
+        }
+      }
+    }
+    return users;
+  }
 
   private extractTweets(instructions: any[]): Tweet[] {
     const tweets: Tweet[] = [];

@@ -275,6 +275,38 @@ npx wrangler d1 execute twiworker-db --remote --file=migrations/0000_init.sql
 
 ---
 
+## ⚠️ Important: Terms of Use
+
+> **This software is provided for Educational and Research Purposes ONLY.**
+
+### Disclaimer
+
+1. **Educational & Research Purpose** — This software was developed for the sole purpose of academically studying and researching the internal API specifications of Twitter/X. It is not intended for commercial or production use.
+
+2. **Not Affiliated with X Corp.** — This software is **not affiliated with, endorsed by, or sponsored by X Corp. (formerly Twitter)**. It is not an official X product, service, or partner application.
+
+3. **Unofficial Client** — This is an unofficial client that utilizes Twitter's internal/private APIs, not the official public X API. These internal API specifications may change without notice.
+
+4. **Terms of Service Compliance** — Users are solely responsible for complying with X Corp.'s [Terms of Service](https://x.com/tos), [Developer Agreement](https://developer.twitter.com/en/developer-terms), and [Automation Rules](https://help.twitter.com/rules-and-policies/twitter-automation). Be aware that using this software may violate these terms.
+
+5. **Use at Your Own Risk** — **The developers assume no liability** for any damages, data loss, account suspension, or legal action resulting from the use of this software. All risks and responsibilities lie with the user.
+
+6. **Account Suspension Risk** — Using unofficial internal APIs may violate X Corp.'s automation policies and could result in temporary or permanent account suspension. Use with caution and avoid using with critical accounts.
+
+7. **Cookie Handling** — This software uses your Twitter authentication cookies. These cookies are sensitive credentials. Do not share them with third parties or commit them to public repositories.
+
+8. **Rate Limiting & Server Load** — Avoid placing excessive load on X's servers. Respect appropriate rate limits.
+
+9. **No Warranty** — This software is provided "AS-IS" without any warranty, express or implied.
+
+10. **Right to Change** — These terms may be updated without notice. Regularly check for the latest version.
+
+---
+
+**Summary: This tool is for learning and research. Not affiliated with X Corp. Use at your own risk.**
+
+---
+
 ## 📝 License
 
 MIT

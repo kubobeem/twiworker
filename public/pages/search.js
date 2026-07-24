@@ -1,5 +1,5 @@
 /* ======================================================
-   twiworker — 検索
+   twiworker — 検索（無限スクロール対応）
    ====================================================== */
 
 registerPage('search', function initSearchPage() {
@@ -9,7 +9,7 @@ registerPage('search', function initSearchPage() {
   container.innerHTML = `
     <div class="page-header">
       <h1>🔍 ツイート検索</h1>
-      <p>キーワードでツイートを検索します</p>
+      <p>キーワードで検索（無限スクロール）</p>
     </div>
 
     <div class="card" style="margin-bottom: 20px;">
@@ -47,9 +47,11 @@ registerPage('search', function initSearchPage() {
     </div>
 
     <div id="search-results">
-      <div class="tweet-list"></div>
+      <div class="tweet-list" id="search-tweet-list"></div>
     </div>
   `;
+
+  let currentCleanup = null;
 
   document.getElementById('search-btn').addEventListener('click', async () => {
     const query = document.getElementById('search-query').value.trim();
@@ -62,8 +64,11 @@ registerPage('search', function initSearchPage() {
     const lang = document.getElementById('search-lang').value;
     const count = document.getElementById('search-count').value;
 
-    const resultsContainer = document.querySelector('#search-results .tweet-list');
+    const resultsContainer = document.getElementById('search-tweet-list');
     resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>検索中...</div>';
+
+    // 前回の無限スクロールをクリーンアップ
+    if (currentCleanup) currentCleanup();
 
     try {
       const params = new URLSearchParams({ q: query, type, count });
@@ -78,6 +83,15 @@ registerPage('search', function initSearchPage() {
       }
 
       data.tweets.forEach(tweet => resultsContainer.appendChild(renderTweet(tweet)));
+
+      // 無限スクロール設定
+      if (data.cursor) {
+        currentCleanup = setupInfiniteScroll(resultsContainer, async (cur) => {
+          const p = new URLSearchParams({ q: query, type, count, cursor: cur });
+          if (lang) p.set('lang', lang);
+          return await api('GET', `/api/search?${p}`);
+        });
+      }
     } catch (err) {
       resultsContainer.innerHTML = `
         <div class="error-state">

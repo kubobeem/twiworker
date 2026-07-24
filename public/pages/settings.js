@@ -21,6 +21,26 @@ registerPage('settings', function initSettingsPage() {
       </div>
     </div>
 
+    <div class="card" style="margin-bottom: 16px; border-color: rgba(239, 68, 68, 0.15);">
+      <div class="card-header">
+        <h3>⚠️ 免責事項</h3>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); line-height: 1.8;">
+        <p style="margin-bottom: 8px; font-weight: 600; color: var(--warning);">このソフトウェアは教育・研究目的で提供されています。</p>
+        <ul style="padding-left: 16px; margin-bottom: 8px;">
+          <li style="margin-bottom: 4px;"><strong>X Corp.とは無関係</strong> — 本ソフトウェアは X Corp.（旧Twitter）の公式製品ではなく、公認・承認・支援されたものではありません。</li>
+          <li style="margin-bottom: 4px;"><strong>非公式クライアント</strong> — Twitter/X の内部APIを利用した非公式クライアントです。</li>
+          <li style="margin-bottom: 4px;"><strong>自己責任</strong> — 使用により生じたアカウント停止・損害について開発者は一切責任を負いません。</li>
+          <li style="margin-bottom: 4px;"><strong>利用規約遵守</strong> — X Corp. の<a href="https://x.com/tos" target="_blank" rel="noopener" style="color: var(--accent);">利用規約</a>を遵守する責任があります。</li>
+          <li style="margin-bottom: 4px;"><strong>クッキー取扱い</strong> — 認証クッキーは機密情報です。公開しないでください。</li>
+          <li style="margin-bottom: 4px;"><strong>アカウント停止リスク</strong> — 内部API使用はポリシー違反の可能性があり、停止リスクがあります。</li>
+          <li style="margin-bottom: 4px;"><strong>無保証</strong> — 「現状のまま（AS-IS）」提供、一切の保証なし。</li>
+        </ul>
+        <p style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); text-align: center; font-size: 11px; opacity: 0.7;">For Educational and Research Purposes Only | Not affiliated with X Corp.</p>
+        <button class="btn btn-danger btn-sm" id="disclaimer-revoke-btn" style="margin-top: 10px; width: 100%;">🔄 同意を取り消す（最初のポップアップを再表示）</button>
+      </div>
+    </div>
+
     <div class="card" style="margin-bottom: 16px;">
       <div class="card-header">
         <h3>🤖 Cron ジョブ</h3>
@@ -106,6 +126,12 @@ registerPage('settings', function initSettingsPage() {
     } catch (err) {
       showToast('エラー', err.message, 'error');
     }
+  });
+
+  // 同意取消ボタン
+  document.getElementById('disclaimer-revoke-btn')?.addEventListener('click', () => {
+    localStorage.removeItem('twiworker_disclaimer_accepted');
+    showToast('同意を取り消しました', '次回ページ更新時にポップアップが再表示されます', 'success');
   });
 
   loadStatus();

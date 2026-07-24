@@ -5,24 +5,16 @@ compatibility_date = "2025-09-01"
 # ======================================================
 # 🗄️ KV 名前空間（レート制限）
 # 新規作成: npx wrangler kv namespace create twiworker-kv
-# 表示された ID を ↓ の id に設定してください
 # ======================================================
 [[kv_namespaces]]
 binding = "KV"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "0e1ea9f295ed4f19a131a0fe44897e61"
 
 # ======================================================
 # 🗄️ D1 データベース（ツイートログ・スケジュール管理）
 # 新規作成: npx wrangler d1 create twiworker-db
-# 表示された ID を ↓ の database_id に設定してください
 # ======================================================
 [[d1_databases]]
 binding = "DB"
 database_name = "twiworker-db"
-database_id = "YOUR_D1_DATABASE_ID"
-
-# ======================================================
-# 🔑 シークレット変数（Pages Dashboard で設定）
-# ======================================================
-# TWITTER_COOKIES    : Twitter ログインクッキー（JSON文字列）
-# ACCOUNT_USERNAME   : Twitter ユーザー名
+database_id = "320aa40b-239f-457c-b070-e4de0103ac6d"

@@ -24,11 +24,12 @@ export class SearchHandler {
     if (!product) {
       return c.json({ success: false, error: { code: 'validation_error', message: 'type must be Top, Latest, or Media' } }, 400);
     }
-    const tweets = await this.client.searchTweets(query, count, product);
+    const cursor = c.req.query('cursor') || undefined;
+    const result = await this.client.searchTweets(query, count, product, cursor);
     const lang = c.req.query('lang');
 
-    const filtered = lang ? tweets.filter(t => t.lang === lang) : tweets;
+    const filtered = lang ? result.tweets.filter(t => t.lang === lang) : result.tweets;
 
-    return c.json({ success: true, data: { query, count: filtered.length, tweets: filtered } });
+    return c.json({ success: true, data: { query, count: filtered.length, tweets: filtered, cursor: result.cursor } });
   }
 }

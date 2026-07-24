@@ -1,110 +1,223 @@
-# twiworker
+# twiworker 🐦
 
-**Cloudflare Workers 上で動く Twitter/X クライアント**
+**Cloudflare Pages + Functions で動く Twitter/X クライアント**
 
-[twiworker-spec.md](../twiworker-spec.md) に基づいて開発されています。
+クッキーベースの認証で Twitter 内部 API（GraphQL）にアクセスし、ツイートの投稿・削除・検索、タイムライン表示、DM送信、トレンド取得などをブラウザから操作できる Web アプリケーションです。
 
-## 概要
+![twiworker dashboard](https://img.shields.io/badge/status-active-brightgreen)
+![GitHub](https://img.shields.io/github/license/kubobeem/twiworker)
 
-twiworker は Cloudflare Workers 上で [twikit](https://github.com/d60/twikit) (Python) を動作させ、
-Twitter/X の各種操作を REST API として提供します。
+---
 
-### 主な機能
+## ✨ 機能一覧
 
-- **ツイート操作**: 投稿・削除・スレッド投稿
-- **検索**: キーワード検索、トレンド取得
-- **タイムライン**: ホームタイムライン取得
-- **ユーザー情報**: プロフィール取得、ツイート一覧
-- **DM**: 取得・送信
-- **フォロー管理**: フォロー/アンフォロー、フォロワー一覧
-- **Cron ジョブ**: 定期ツイート、トレンド保存、ログクリーンアップ
-- **管理**: ヘルスチェック、ステータス確認
+| 機能 | 説明 |
+|---|---|
+| 📊 ダッシュボード | アカウント情報・接続状態・統計を一覧表示 |
+| ✍️ ツイート投稿 | テキスト投稿・画像URL付き・スレッドモード対応 |
+| 🗑️ ツイート削除 | ツイートID指定で削除 |
+| 📰 タイムライン | ホームタイムラインの表示（20件） |
+| 🔍 検索 | キーワード検索（Top / Latest / Media） |
+| 👤 ユーザー情報 | ユーザー詳細・ツイート一覧の取得 |
+| 📈 トレンド | 全世界・日本のトレンド表示 |
+| ✉️ DM | ダイレクトメッセージの送信・一覧表示 |
+| 📅 スケジュール | ツイートの予約投稿（D1保存） |
+| ⚙️ 設定 | 接続状態・Cronジョブ手動実行・API一覧 |
+| 🔄 スレッド投稿 | 複数ツイートを連続投稿（リプライチェーン） |
+| 🚦 レート制限 | IPベースのリクエスト制限（KV使用） |
 
-## セットアップ
+---
 
-### 1. 環境準備
+## 🏗 アーキテクチャ
 
-```bash
-# uv のインストール（なければ）
-pip install uv
-
-# 依存関係のインストール
-uv sync
+```
+twiworker/
+├── public/               # 静的ファイル（HTML, CSS, JS）
+│   ├── index.html        # SPA メインページ
+│   ├── style.css         # ダークテーマUI（グラスモーフィズム）
+│   ├── app.js            # 共通JS（ナビゲーション, API, トースト）
+│   └── pages/            # 各ページJS
+│       ├── dashboard.js
+│       ├── compose.js
+│       ├── timeline.js
+│       ├── search.js
+│       ├── dm.js
+│       ├── schedule.js
+│       ├── trends.js
+│       └── settings.js
+├── functions/            # Cloudflare Pages Functions
+│   └── api/
+│       ├── _middleware.ts # CORS ミドルウェア
+│       └── [[route]].ts  # Hono へのcatch-allルーティング
+├── src/                  # バックエンドTypeScript
+│   ├── index.ts          # Hono アプリ（ルーティング定義）
+│   ├── client.ts         # Twitter API クライアント（GraphQL）
+│   ├── types.ts          # 型定義
+│   ├── handlers/         # 機能別ハンドラー
+│   │   ├── admin.ts      # ヘルスチェック・ステータス
+│   │   ├── tweet.ts      # ツイート投稿・削除
+│   │   ├── search.ts     # 検索
+│   │   ├── timeline.ts   # タイムライン
+│   │   ├── user.ts       # ユーザー情報
+│   │   ├── trends.ts     # トレンド
+│   │   ├── dm.ts         # DM送信・一覧
+│   │   └── cron.ts       # スケジュール・クリーンアップ
+│   ├── storage/          # データストア
+│   │   ├── d1.ts         # D1 データベース操作
+│   │   └── kv.ts         # KV ストア操作
+│   └── middleware/        # ミドルウェア
+│       └── ratelimit.ts  # レート制限
+├── migrations/           # D1 マイグレーション
+│   └── 0000_init.sql     # 初期テーブル定義
+├── wrangler.toml          # Cloudflare 設定
+└── package.json           # 依存関係・スクリプト
 ```
 
-### 2. Cloudflare リソースの作成
+### 技術スタック
+
+- **フロントエンド**: バニラJS（SPA）, CSS（グラスモーフィズム・ダークテーマ）
+- **バックエンド**: TypeScript, [Hono](https://hono.dev/) フレームワーク
+- **認証**: Twitter クッキーベース（グラフQL内部API）
+- **ストレージ**: Cloudflare KV（レート制限）, Cloudflare D1（ログ・スケジュール）
+- **デプロイ**: Cloudflare Pages + Functions
+
+---
+
+## 🚀 デプロイ手順
+
+### 1. リポジトリをクローン
 
 ```bash
-# KV 名前空間の作成
-npx wrangler kv:namespace create twiworker-kv
+git clone https://github.com/kubobeem/twiworker.git
+cd twiworker
+npm install
+```
 
-# D1 データベースの作成
+### 2. Cloudflare リソースを作成
+
+```bash
+# KV 名前空間を作成
+npx wrangler kv namespace create twiworker-kv
+# → 出力された ID を wrangler.toml の [[kv_namespaces]] id に設定
+
+# D1 データベースを作成
 npx wrangler d1 create twiworker-db
+# → 出力された ID を wrangler.toml の [[d1_databases]] database_id に設定
 
-# マイグレーションの適用
-npx wrangler d1 migrations apply twiworker-db
+# マイグレーションを適用
+npm run db:migrate
 ```
 
-`wrangler.toml` に作成した KV/D1 の ID を設定してください。
+### 3. Twitter クッキーを取得
 
-### 3. 環境変数の設定
+ブラウザで X（Twitter）にログイン後、DevTools の Application > Cookies から以下のクッキーを取得します：
+
+- `auth_token`
+- `ct0`
+- `twid`
+- `kdt`
+- `lang`
+- `_twitter_sess`
+
+### 4. シークレットを設定
 
 ```bash
-# クッキーの設定（ブラウザから Twitter ログイン済みクッキーをエクスポート）
-npx wrangler secret put TWITTER_COOKIES
-
-# アカウント名の設定
-npx wrangler secret put ACCOUNT_USERNAME
+# JSON 形式でクッキーを設定
+npx wrangler pages secret put TWITTER_COOKIES --project-name=twiworker
+# ↑ auth_token, ct0, twid, kdt, lang, _twitter_sess をJSONにしたものを入力
 ```
 
-ローカル開発時は `.dev.vars.example` を `.dev.vars` にコピーして編集してください。
-
-### 4. ローカル開発
-
-```bash
-npx wrangler dev
-```
+または Cloudflare Pages のダッシュボード > twiworker > Settings > Environment variables から設定します。
 
 ### 5. デプロイ
 
 ```bash
-npx wrangler deploy
+npm run deploy
 ```
 
-## API エンドポイント
+### 6. ローカル開発
 
-| メソッド | パス | 説明 |
-|---------|------|------|
-| `GET` | `/api/health` | ヘルスチェック |
-| `GET` | `/api/status` | 詳細ステータス |
-| `POST` | `/api/tweet` | ツイート投稿 |
-| `POST` | `/api/thread` | スレッド投稿 |
-| `GET` | `/api/tweet/:id` | ツイート取得 |
-| `DELETE` | `/api/tweet/:id` | ツイート削除 |
-| `GET` | `/api/search?q=keyword` | ツイート検索 |
-| `GET` | `/api/timeline` | タイムライン取得 |
-| `GET` | `/api/user/:id` | ユーザー情報 |
-| `GET` | `/api/user/:id/tweets` | ユーザーのツイート |
-| `GET` | `/api/dm` | DM一覧 |
-| `POST` | `/api/dm` | DM送信 |
-| `POST` | `/api/follow/:id` | フォロー |
-| `POST` | `/api/unfollow/:id` | アンフォロー |
-| `GET` | `/api/followers` | フォロワー一覧 |
-| `GET` | `/api/following` | フォロー中一覧 |
-| `GET` | `/api/trends` | トレンド取得 |
-| `POST` | `/api/cron/trends` | トレンド保存ジョブ |
-| `POST` | `/api/cron/scheduled-tweets` | 予約ツイート実行 |
-| `POST` | `/api/cron/cleanup` | ログクリーンアップ |
+```bash
+# .dev.vars ファイルを作成して TWITTER_COOKIES を設定
+echo '{"auth_token":"...","ct0":"..."}' > .dev.vars
 
-## 認証
+# 開発サーバー起動
+npm run dev
+```
 
-Twitter 認証には **クッキーベース認証** を使用します。
-ブラウザで Twitter にログインした状態でクッキーをエクスポートし、
-`TWITTER_COOKIES` 環境変数に設定してください。
+---
 
-**注意**: twikit は非公式の Twitter API クライアントです。
-アカウントが停止されるリスクがあるため、バーナーアカウントの使用を推奨します。
+## 🔌 API エンドポイント一覧
 
-## ライセンス
+### 管理系
+
+| Method | Path | 説明 |
+|--------|------|------|
+| GET | `/api/health` | ヘルスチェック（KV/D1/Twitter状態） |
+| GET | `/api/status` | 詳細ステータス（アカウント情報含む） |
+
+### ツイート操作
+
+| Method | Path | 説明 |
+|--------|------|------|
+| POST | `/api/tweet` | ツイート投稿 |
+| POST | `/api/thread` | スレッド投稿（複数ツイート） |
+| DELETE | `/api/tweet/:id` | ツイート削除 |
+
+### 情報取得
+
+| Method | Path | 説明 |
+|--------|------|------|
+| GET | `/api/timeline` | ホームタイムライン |
+| GET | `/api/search?q=キーワード` | ツイート検索 |
+| GET | `/api/user/:id` | ユーザー情報 |
+| GET | `/api/user/:id/tweets` | ユーザーのツイート一覧 |
+| GET | `/api/trends?woeid=1` | トレンド（1=全世界, 23424856=日本） |
+
+### DM
+
+| Method | Path | 説明 |
+|--------|------|------|
+| GET | `/api/dm` | DM一覧 |
+| POST | `/api/dm` | DM送信 |
+
+### Cron（HTTP経由の手動実行）
+
+| Method | Path | 説明 |
+|--------|------|------|
+| POST | `/api/cron/trends` | トレンドをD1に保存 |
+| POST | `/api/cron/scheduled-tweets` | 予約ツイートを実行 |
+| POST | `/api/cron/cleanup` | 30日以上前のログを削除 |
+
+---
+
+## 🔑 環境変数・シークレット
+
+| 変数 | 必須 | 説明 |
+|------|------|------|
+| `TWITTER_COOKIES` | ✅ | Twitter ログインクッキー（JSON） |
+| `ACCOUNT_USERNAME` | 任意 | Twitter ユーザー名 |
+| `SITE_URL` | 任意 | サイトURL（CORS用） |
+| `ADMIN_API_KEY` | 任意 | 管理APIキー |
+
+---
+
+## 🔧 注意事項
+
+- **GraphQL クエリID**: Twitter は定期的に内部 API のクエリIDをローテーションします。検索などが動かなくなった場合は `src/client.ts` の `ENDPOINTS` を [twikit](https://github.com/d60/twikit) の最新コードを参照して更新してください。
+- **レート制限**: Twitter 内部 API に対する過剰なリクエストはアカウント停止のリスクがあります。適度に使用してください。
+- **クッキーの有効期限**: `auth_token` や `ct0` のクッキーには有効期限があります。定期的な更新が必要です。
+
+---
+
+## 📝 ライセンス
 
 MIT
+
+---
+
+## 🙏 クレジット
+
+- [twikit](https://github.com/d60/twikit) - Python 版 Twitter クライアント（GraphQL エンドポイントの参考実装）
+- [Hono](https://hono.dev/) - 軽量 Web フレームワーク
+- [Cloudflare Pages](https://pages.cloudflare.com/) - サーバーレスホスティング

@@ -4,7 +4,7 @@
 
 **Twitter/X Client running on Cloudflare Pages + Functions**
 
-A web application that accesses Twitter's internal GraphQL API using cookie-based authentication. Post, delete, and search tweets, view timelines, send DMs, and fetch trends — all from your browser.
+A web application that accesses Twitter's internal GraphQL API using cookie-based authentication. Post/delete/search tweets, view timelines with infinite scroll, like/retweet/follow, send DMs, and fetch trends — all from your browser.
 
 [![Live Demo](https://img.shields.io/badge/demo-online-brightgreen?style=flat-square&logo=cloudflare)](https://85eeed39.twiworker.pages.dev)
 ![GitHub](https://img.shields.io/github/license/kubobeem/twiworker?style=flat-square)
@@ -16,20 +16,91 @@ A web application that accesses Twitter's internal GraphQL API using cookie-base
 
 ## ✨ Features
 
+### 🖥️ Web UI (Frontend Pages)
+
+| Page | Features | Interaction |
+|------|----------|-------------|
+| 📊 **Dashboard** | Account info, connection status, stats cards, recent tweets | Auto-refresh |
+| ✍️ **Compose** | Text tweets, image URLs, scheduled posts, thread mode (multi-tweet chain) | Form input |
+| 🔍 **Search** | Keyword search (Top / Latest / Media), language filter, count, **infinite scroll** | Form + auto-load |
+| 📰 **Timeline** | Home timeline display, **infinite scroll**, refresh to latest | Auto-load + refresh |
+| ✉️ **DM** | Direct message list & send | Form input |
+| 📅 **Schedule** | Scheduled tweets list, manual execution, deletion | List + buttons |
+| 📈 **Trends** | Global / Japan trends display, WOEID toggle | Tab switching |
+| ⚙️ **Settings** | Connection status, manual cron jobs, API endpoints, **consent revocation** | Buttons |
+
+### 💡 Tweet Card Interactions
+
+| Action | Description |
+|--------|-------------|
+| ❤️ **Like / Unlike** | Click ❤️ on any tweet card to toggle like (changes to 💖) |
+| 🔄 **Retweet** | Click 🔄 to retweet |
+| 💬 **Reply** | Click 💬 to show inline reply form |
+| 👤 **Follow / Unfollow** | Via `POST /api/follow/:id` / `POST /api/unfollow/:id` |
+
+### 🔧 Backend API
+
+| Category | Endpoint | Description |
+|----------|----------|-------------|
+| **Admin** | `GET /api/health` | Health check (KV/D1/Twitter status) |
+| | `GET /api/status` | Detailed status with account info |
+| **Tweets** | `POST /api/tweet` | Post tweet (text, media_urls, reply_to, schedule_at) |
+| | `POST /api/thread` | Post thread (multiple tweets as reply chain) |
+| | `DELETE /api/tweet/:id` | Delete tweet |
+| | `GET /api/tweet/:id` | Tweet detail |
+| **Timeline** | `GET /api/timeline?count=&cursor=` | Home timeline (cursor pagination) |
+| **Search** | `GET /api/search?q=&type=&count=&cursor=` | Search (Top/Latest/Media, cursor) |
+| **User** | `GET /api/user/:id` | User info (screen_name or ID) |
+| | `GET /api/user/:id/tweets` | User's tweets |
+| | `GET /api/user/:id/likes` | User's likes |
+| | `GET /api/user/:id/followers` | Followers list |
+| | `GET /api/user/:id/following` | Following list |
+| **Like** | `POST /api/tweet/:id/like` | Like a tweet |
+| | `POST /api/tweet/:id/unlike` | Unlike a tweet |
+| **Retweet** | `POST /api/tweet/:id/retweet` | Retweet |
+| | `POST /api/tweet/:id/unretweet` | Unretweet |
+| **Follow** | `POST /api/follow/:id` | Follow user |
+| | `POST /api/unfollow/:id` | Unfollow user |
+| **DM** | `GET /api/dm` | List DMs |
+| | `POST /api/dm` | Send DM (user_id, text) |
+| **Trends** | `GET /api/trends?woeid=` | Get trends (1=World, 23424856=Japan) |
+| **Cron** | `POST /api/cron/trends` | Save trends to D1 |
+| | `POST /api/cron/scheduled-tweets` | Execute scheduled tweets |
+| | `POST /api/cron/cleanup` | Delete logs older than 30 days |
+
+### ⌨️ Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `1`-`8` | Switch pages (sidebar order) |
+| `N` | Open compose page |
+| `/` | Open search page (auto-focus input) |
+| `R` | Refresh current page |
+
+### 🎨 UI/UX Features
+
 | Feature | Description |
-|---|---|
-| 📊 Dashboard | Account info, connection status, stats at a glance |
-| ✍️ Compose Tweet | Text, image URLs, thread mode |
-| 🗑️ Delete Tweet | Remove tweets by ID |
-| 📰 Timeline | Home timeline display (20 tweets) |
-| 🔍 Search | Keyword search (Top / Latest / Media) |
-| 👤 User Info | User details and tweet history |
-| 📈 Trends | Global and Japan trending topics |
-| ✉️ DM | Send and list direct messages |
-| 📅 Schedule | Schedule tweets for later (D1 storage) |
-| ⚙️ Settings | Connection status, manual cron execution, API list |
-| 🔄 Thread | Post multiple tweets as a reply chain |
-| 🚦 Rate Limiting | IP-based request throttling (KV) |
+|---------|-------------|
+| 🌓 Dark Theme | Glassmorphism design with frosted-glass effects |
+| 📱 Responsive | Mobile-friendly with hamburger menu |
+| ♾️ **Infinite Scroll** | IntersectionObserver-based auto-pagination (timeline & search) |
+| 💬 **Inline Reply** | Reply directly within tweet cards |
+| 🔔 **Toast Notifications** | Operation feedback popups |
+| 🦴 **Skeleton Loading** | Placeholder cards while loading |
+| ⚡ **SPA Navigation** | Fast page transitions without full reload |
+| 🔄 **Auto Status Updates** | Connection status refresh every 60s |
+
+### ⚖️ Consent & Disclaimer System
+
+| Feature | Description |
+|---------|-------------|
+| 🪟 **First-visit Modal** | 7-item disclaimer on first access (controlled via `localStorage`) |
+| ✅ **Agree** | Button click → normal usage |
+| ✖️ **Decline** | Redirects to Google.com |
+| ⌨️ **Escape Key** | Triggers decline (same as above) |
+| 🔄 **Revoke Consent** | "Revoke consent" button in Settings page |
+| 📜 **Footer Disclaimer** | Always visible on all pages |
+| ⚙️ **Settings Page** | Embedded disclaimer card for re-reading |
 
 ---
 
@@ -37,26 +108,48 @@ A web application that accesses Twitter's internal GraphQL API using cookie-base
 
 ```
 twiworker/
-├── public/               # Static assets (SPA)
-│   ├── index.html        # Main page
-│   ├── style.css         # Dark theme UI
-│   ├── app.js            # Shared JS (navigation, API, toasts)
-│   └── pages/            # Page-specific JS (8 pages)
-├── functions/api/        # Cloudflare Pages Functions
-│   ├── _middleware.ts    # CORS
-│   └── [[route]].ts     # Catch-all routing to Hono
-├── src/                  # Backend TypeScript
-│   ├── index.ts          # Hono app & routes
-│   ├── client.ts         # Twitter GraphQL API client
-│   ├── types.ts          # Type definitions
-│   ├── handlers/         # Feature handlers (8 files)
-│   ├── storage/          # D1 / KV stores
-│   └── middleware/       # Rate limiter
+├── public/                    # Static assets (SPA)
+│   ├── index.html             # Main page + consent modal + footer
+│   ├── style.css              # Dark theme UI (glassmorphism)
+│   ├── app.js                 # Shared JS (nav, API, toasts, infinite scroll, consent modal)
+│   └── pages/                 # Page-specific JS (8 pages)
+│       ├── dashboard.js
+│       ├── compose.js
+│       ├── search.js
+│       ├── timeline.js
+│       ├── dm.js
+│       ├── schedule.js
+│       ├── trends.js
+│       └── settings.js
+├── functions/api/             # Cloudflare Pages Functions
+│   ├── _middleware.ts         # CORS
+│   └── [[route]].ts          # Catch-all routing to Hono
+├── src/                       # Backend TypeScript
+│   ├── index.ts               # Hono app & routes (all API endpoints)
+│   ├── client.ts              # Twitter GraphQL API client
+│   ├── types.ts               # Type definitions
+│   ├── config.ts              # Configuration management
+│   ├── handlers/              # Feature handlers (9 files)
+│   │   ├── tweet.ts           # Post/delete tweets
+│   │   ├── timeline.ts        # Home timeline
+│   │   ├── search.ts          # Search
+│   │   ├── user.ts            # User info
+│   │   ├── interaction.ts     # Like/retweet/follow
+│   │   ├── dm.ts              # Direct messages
+│   │   ├── trends.ts          # Trending topics
+│   │   ├── cron.ts            # Cron jobs
+│   │   └── admin.ts           # Health check & status
+│   ├── storage/
+│   │   ├── d1.ts              # D1 database
+│   │   └── kv.ts              # KV store
+│   └── middleware/
+│       └── ratelimit.ts       # Rate limiting
 ├── migrations/
-│   └── 0000_init.sql     # D1 table definitions
+│   └── 0000_init.sql          # D1 table definitions
 ├── wrangler.toml
-├── .dev.vars.example     # Local env var template
-└── package.json
+├── package.json
+├── tsconfig.json
+└── .dev.vars.example          # Local env var template
 ```
 
 ### Stack
@@ -198,33 +291,47 @@ npm run dev
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Endpoints (Full List)
 
 ### Admin
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/health` | Health check (KV/D1/Twitter status) |
-| GET | `/api/status` | Detailed status including account info |
+| GET | `/api/health` | Health check (KV/D1/Twitter connection status) |
+| GET | `/api/status` | Detailed status with account info |
 
 ### Tweet Operations
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/tweet` | Post a tweet (body: `{text, media_urls?, schedule_at?}`) |
-| POST | `/api/thread` | Post a thread (body: `{tweets: [{text}]}`) |
+| POST | `/api/tweet` | Post a tweet (body: `{text, media_urls?, reply_to?, schedule_at?}`) |
+| POST | `/api/thread` | Post a thread (body: `{tweets: [{text, media_urls?}]}`) |
 | DELETE | `/api/tweet/:id` | Delete a tweet |
+| GET | `/api/tweet/:id` | Tweet detail |
 
 ### Data Retrieval
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/timeline?count=20` | Home timeline |
-| GET | `/api/search?q=keyword&type=latest` | Search tweets |
-| GET | `/api/user/:id` | User info |
+| GET | `/api/timeline?count=20&cursor=` | Home timeline (cursor pagination) |
+| GET | `/api/search?q=keyword&type=Top&count=20&cursor=` | Search (Top/Latest/Media, cursor) |
+| GET | `/api/user/:id` | User info (screen_name or user_id) |
 | GET | `/api/user/:id/tweets` | User's tweets |
+| GET | `/api/user/:id/likes` | User's likes |
+| GET | `/api/user/:id/followers` | Followers list |
+| GET | `/api/user/:id/following` | Following list |
 | GET | `/api/trends?woeid=1` | Trends (1=World, 23424856=Japan) |
-| GET | `/api/tweet/:id` | Tweet detail |
+
+### Interactions
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/tweet/:id/like` | Like a tweet |
+| POST | `/api/tweet/:id/unlike` | Unlike a tweet |
+| POST | `/api/tweet/:id/retweet` | Retweet |
+| POST | `/api/tweet/:id/unretweet` | Unretweet |
+| POST | `/api/follow/:id` | Follow a user |
+| POST | `/api/unfollow/:id` | Unfollow a user |
 
 ### DM
 
@@ -247,7 +354,7 @@ npm run dev
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `TWITTER_COOKIES` | ✅ | Twitter cookies as JSON |
+| `TWITTER_COOKIES` | ✅ | Twitter cookies JSON (auth_token, ct0, twid, kdt, lang, _twitter_sess) |
 | `ACCOUNT_USERNAME` | Optional | Twitter username |
 | `SITE_URL` | Optional | Site URL (for CORS) |
 | `ADMIN_API_KEY` | Optional | Admin API key |
@@ -260,6 +367,9 @@ npm run dev
 ### Updating GraphQL Query IDs
 
 Twitter periodically rotates internal API query IDs. If tweets, timeline, or search suddenly stop working, update the `ENDPOINTS` in `src/client.ts` by checking the latest [twikit](https://github.com/d60/twikit) source code.
+
+Currently supported endpoints:
+`CreateTweet`, `DeleteTweet`, `SearchTimeline`, `HomeTimeline`, `UserByScreenName`, `UserTweets`, `TweetDetail`, `Followers`, `Following`, `FavoriteTweet`, `UnfavoriteTweet`, `CreateRetweet`, `DeleteRetweet`, `UserByRestId`, `UserLikes`
 
 ### Refreshing cookies
 

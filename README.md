@@ -74,7 +74,15 @@ twiworker/
 - Cloudflare アカウント（無料でOK）
 - Twitter/X アカウント（ログイン済みのブラウザ）
 
-### 1. リポジトリをクローン
+### 1. Cloudflare にログイン
+
+```bash
+npx wrangler login
+```
+
+ブラウザが開いて Cloudflare の認証画面が表示されるので許可します。
+
+### 2. リポジトリをクローン
 
 ```bash
 git clone https://github.com/kubobeem/twiworker.git
@@ -82,7 +90,7 @@ cd twiworker
 npm install
 ```
 
-### 2. wrangler.toml を設定
+### 3. wrangler.toml を設定
 
 `wrangler.toml` を開いて、KV と D1 の設定をコメント解除・編集します。
 

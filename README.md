@@ -4,8 +4,11 @@
 
 クッキーベースの認証で Twitter 内部 API（GraphQL）にアクセスし、ツイートの投稿・削除・検索、タイムライン表示、DM送信、トレンド取得などをブラウザから操作できる Web アプリケーションです。
 
-![twiworker dashboard](https://img.shields.io/badge/status-active-brightgreen)
-![GitHub](https://img.shields.io/github/license/kubobeem/twiworker)
+[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen?style=flat-square&logo=cloudflare)](https://85eeed39.twiworker.pages.dev)
+![GitHub](https://img.shields.io/github/license/kubobeem/twiworker?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)
+![Hono](https://img.shields.io/badge/Hono-4.7-orange?style=flat-square)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-Pages-F38020?style=flat-square&logo=cloudflare)
 
 ---
 

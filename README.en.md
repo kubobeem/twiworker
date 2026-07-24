@@ -6,7 +6,7 @@
 
 A web application that accesses Twitter's internal GraphQL API using cookie-based authentication. Post/delete/search tweets, view timelines with infinite scroll, like/retweet/follow, send DMs, and fetch trends — all from your browser.
 
-[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen?style=flat-square&logo=cloudflare)](https://85eeed39.twiworker.pages.dev)
+[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen?style=flat-square&logo=cloudflare)](https://b66fd67e.twiworker.pages.dev)
 ![GitHub](https://img.shields.io/github/license/kubobeem/twiworker?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square&logo=typescript)
 ![Hono](https://img.shields.io/badge/Hono-4.7-orange?style=flat-square)

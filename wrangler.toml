@@ -3,19 +3,21 @@ pages_build_output_dir = "public"
 compatibility_date = "2025-09-01"
 
 # ======================================================
-# 🗄️ KV 名前空間（Cookie保存・レート制限）
+# 🗄️ KV 名前空間（レート制限）
+# 新規作成: npx wrangler kv namespace create twiworker-kv
 # ======================================================
-[[kv_namespaces]]
-binding = "KV"
-id = "0e1ea9f295ed4f19a131a0fe44897e61"
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "<your-kv-namespace-id>"
 
 # ======================================================
 # 🗄️ D1 データベース（ツイートログ・スケジュール管理）
+# 新規作成: npx wrangler d1 create twiworker-db
 # ======================================================
-[[d1_databases]]
-binding = "DB"
-database_name = "twiworker-db"
-database_id = "320aa40b-239f-457c-b070-e4de0103ac6d"
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "twiworker-db"
+# database_id = "<your-d1-database-id>"
 
 # ======================================================
 # 🔑 シークレット変数（Pages Dashboard で設定）

@@ -1,0 +1,21 @@
+# ======================================================
+# twiworker ローカル開発用環境変数
+# ======================================================
+# このファイルを .dev.vars にコピーして編集してください
+# （.dev.vars は .gitignore で除外されます）
+# ======================================================
+
+# Twitter 認証：ブラウザからエクスポートしたクッキー（JSON形式）
+TWITTER_COOKIES='{"auth_token": "...", "ct0": "..."}'
+
+# Twitter ユーザー名
+ACCOUNT_USERNAME="your_twitter_username"
+
+# サイトの公開URL
+SITE_URL="http://localhost:8787"
+
+# デバッグモード（1で有効）
+DEBUG="1"
+
+# 管理用APIキー（将来対応）
+# ADMIN_API_KEY="your-admin-api-key"

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>twiworker — ダッシュボード</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐦</text></svg>">
+</head>
+<body>
+  <!-- モバイルメニューボタン -->
+  <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="メニュー">☰</button>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- サイドバー -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      twiworker <span class="badge">β</span>
+    </div>
+    <div class="sidebar-status" id="sidebar-status">
+      <span class="dot"></span>
+      <span>接続確認中...</span>
+    </div>
+    <ul class="nav-list">
+      <li class="nav-item active" data-page="dashboard">
+        <span class="icon">📊</span> ダッシュボード
+      </li>
+      <li class="nav-item" data-page="compose">
+        <span class="icon">✍️</span> ツイート投稿 <span style="margin-left:auto;font-size:11px;color:var(--text-muted);">N</span>
+      </li>
+      <li class="nav-item" data-page="search">
+        <span class="icon">🔍</span> 検索 <span style="margin-left:auto;font-size:11px;color:var(--text-muted);">/</span>
+      </li>
+      <li class="nav-item" data-page="timeline">
+        <span class="icon">📰</span> タイムライン
+      </li>
+      <li class="nav-item" data-page="dm">
+        <span class="icon">✉️</span> DM
+      </li>
+      <li class="nav-item" data-page="schedule">
+        <span class="icon">📅</span> スケジュール
+      </li>
+      <li class="nav-item" data-page="trends">
+        <span class="icon">📈</span> トレンド
+      </li>
+      <li class="nav-item" data-page="settings">
+        <span class="icon">⚙️</span> 設定
+      </li>
+    </ul>
+  </nav>
+
+  <!-- メインコンテンツ -->
+  <main class="main-content">
+    <div id="page-dashboard" class="page-content">
+      <div class="page-header">
+        <h1>📊 ダッシュボード</h1>
+        <p>twiworker の運用状態を確認できます</p>
+      </div>
+      <div id="stats-container"><div class="loading"><div class="spinner"></div>読み込み中...</div></div>
+      <div id="recent-tweets-section">
+        <div class="card">
+          <div class="card-header"><h3><span class="icon">📝</span>最近のツイート</h3></div>
+          <div id="recent-tweets-list" class="tweet-list"><div class="loading"><div class="spinner"></div>読み込み中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-compose" class="page-content" style="display:none"></div>
+    <div id="page-search" class="page-content" style="display:none"></div>
+    <div id="page-timeline" class="page-content" style="display:none"></div>
+    <div id="page-dm" class="page-content" style="display:none"></div>
+    <div id="page-schedule" class="page-content" style="display:none"></div>
+    <div id="page-trends" class="page-content" style="display:none"></div>
+    <div id="page-settings" class="page-content" style="display:none"></div>
+  </main>
+
+  <!-- キーボードショートカットヒント -->
+  <div class="shortcut-hint" id="shortcut-hint">
+    <span><span class="kbd">N</span> 新規ツイート</span>
+    <span><span class="kbd">/</span> 検索</span>
+    <span><span class="kbd">1-8</span> ページ切替</span>
+    <span><span class="kbd">R</span> 更新</span>
+  </div>
+
+  <script src="/app.js"></script>
+  <script src="/pages/dashboard.js"></script>
+  <script src="/pages/compose.js"></script>
+  <script src="/pages/search.js"></script>
+  <script src="/pages/timeline.js"></script>
+  <script src="/pages/dm.js"></script>
+  <script src="/pages/schedule.js"></script>
+  <script src="/pages/trends.js"></script>
+  <script src="/pages/settings.js"></script>
+</body>
+</html>

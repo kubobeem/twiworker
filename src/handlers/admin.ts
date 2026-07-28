@@ -1,5 +1,5 @@
 /**
- * 管理・ヘルスチェックハンドラー
+ * twiworker v0.2.0 — 管理・ヘルスチェックハンドラー
  */
 
 import type { Env } from '../types';
@@ -18,7 +18,7 @@ export class AdminHandler {
   async health() {
     return {
       status: 'ok',
-      version: '0.1.0',
+      version: '0.2.0',
       twitter_logged_in: this.client.isInitialized,
       kv_available: this.kv.available,
       d1_available: this.d1.available,
@@ -28,7 +28,7 @@ export class AdminHandler {
   async status() {
     return {
       status: 'ok',
-      version: '0.1.0',
+      version: '0.2.0',
       config: {
         account_username: this.env.ACCOUNT_USERNAME ?? null,
         debug: this.env.DEBUG === '1',

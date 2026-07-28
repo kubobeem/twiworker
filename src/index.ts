@@ -1,8 +1,7 @@
 /**
- * twiworker — Cloudflare Workers / Pages Functions で動く Twitter/X クライアント
+ * twiworker v0.2.0 — Cloudflare Workers / Pages Functions で動く Twitter/X クライアント
  *
- * Hono フレームワークを使用。
- * Pages Functions からは import { app } ... で利用する。
+ * 全機能ルーティング
  */
 
 import { Hono } from 'hono';
@@ -20,6 +19,11 @@ import { DmHandler } from './handlers/dm';
 import { InteractionHandler } from './handlers/interaction';
 import { CronHandler } from './handlers/cron';
 import { AdminHandler } from './handlers/admin';
+import { BookmarkHandler } from './handlers/bookmark';
+import { ListHandler } from './handlers/list';
+import { NotificationHandler } from './handlers/notification';
+import { PollHandler } from './handlers/poll';
+import { SpaceHandler } from './handlers/space';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -60,46 +64,14 @@ function getHandlers(c: any) {
     interaction: new InteractionHandler(client),
     cron: new CronHandler(client, d1),
     admin: new AdminHandler(client, c.env, kv, d1),
+    bookmark: new BookmarkHandler(client),
+    list: new ListHandler(client),
+    notification: new NotificationHandler(client),
+    poll: new PollHandler(client),
+    space: new SpaceHandler(client),
     client, d1,
   };
 }
-
-// ---- インタラクション（いいね・リポスト・フォロー）----
-app.post('/api/tweet/:id/like', async (c) => {
-  const { client, interaction } = getHandlers(c);
-  await client.initialize();
-  return interaction.likeTweet(c);
-});
-
-app.post('/api/tweet/:id/unlike', async (c) => {
-  const { client, interaction } = getHandlers(c);
-  await client.initialize();
-  return interaction.unlikeTweet(c);
-});
-
-app.post('/api/tweet/:id/retweet', async (c) => {
-  const { client, interaction } = getHandlers(c);
-  await client.initialize();
-  return interaction.retweet(c);
-});
-
-app.post('/api/tweet/:id/unretweet', async (c) => {
-  const { client, interaction } = getHandlers(c);
-  await client.initialize();
-  return interaction.unretweet(c);
-});
-
-app.post('/api/follow/:id', async (c) => {
-  const { client, interaction } = getHandlers(c);
-  await client.initialize();
-  return interaction.followUser(c);
-});
-
-app.post('/api/unfollow/:id', async (c) => {
-  const { client, interaction } = getHandlers(c);
-  await client.initialize();
-  return interaction.unfollowUser(c);
-});
 
 // ---- 管理系 ----
 app.get('/api/health', async (c) => {
@@ -138,6 +110,12 @@ app.post('/api/thread', async (c) => {
   return c.json({ success: true, data: { tweets: results } }, 201);
 });
 
+app.get('/api/tweet/:id', async (c) => {
+  const { client, tweet } = getHandlers(c);
+  await client.initialize();
+  return tweet.getTweet(c);
+});
+
 app.delete('/api/tweet/:id', async (c) => {
   const { client, tweet } = getHandlers(c);
   await client.initialize();
@@ -171,11 +149,136 @@ app.get('/api/user/:id/tweets', async (c) => {
   return user.getUserTweets(c);
 });
 
-// ---- トレンド ----
-app.get('/api/trends', async (c) => {
-  const { client, trends } = getHandlers(c);
+app.get('/api/user/:id/likes', async (c) => {
+  const { client, user } = getHandlers(c);
   await client.initialize();
-  return trends.getTrends(c);
+  return user.getUserLikes(c);
+});
+
+app.get('/api/user/:id/followers', async (c) => {
+  const { client, user } = getHandlers(c);
+  await client.initialize();
+  return user.getFollowers(c);
+});
+
+app.get('/api/user/:id/following', async (c) => {
+  const { client, user } = getHandlers(c);
+  await client.initialize();
+  return user.getFollowing(c);
+});
+
+// ---- いいね / リポスト / フォロー ----
+app.post('/api/tweet/:id/like', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.likeTweet(c);
+});
+
+app.post('/api/tweet/:id/unlike', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.unlikeTweet(c);
+});
+
+app.post('/api/tweet/:id/retweet', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.retweet(c);
+});
+
+app.post('/api/tweet/:id/unretweet', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.unretweet(c);
+});
+
+app.post('/api/follow/:id', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.followUser(c);
+});
+
+app.post('/api/unfollow/:id', async (c) => {
+  const { client, interaction } = getHandlers(c);
+  await client.initialize();
+  return interaction.unfollowUser(c);
+});
+
+// ---- ブックマーク ----
+app.get('/api/bookmarks', async (c) => {
+  const { client, bookmark } = getHandlers(c);
+  await client.initialize();
+  return bookmark.getBookmarks(c);
+});
+
+app.post('/api/bookmarks', async (c) => {
+  const { client, bookmark } = getHandlers(c);
+  await client.initialize();
+  return bookmark.createBookmark(c);
+});
+
+app.delete('/api/bookmarks/:id', async (c) => {
+  const { client, bookmark } = getHandlers(c);
+  await client.initialize();
+  return bookmark.deleteBookmark(c);
+});
+
+// ---- リスト ----
+app.get('/api/lists', async (c) => {
+  const { client, list } = getHandlers(c);
+  await client.initialize();
+  return list.getLists(c);
+});
+
+app.post('/api/lists', async (c) => {
+  const { client, list } = getHandlers(c);
+  await client.initialize();
+  return list.createList(c);
+});
+
+app.get('/api/lists/:id/tweets', async (c) => {
+  const { client, list } = getHandlers(c);
+  await client.initialize();
+  return list.getListTweets(c);
+});
+
+app.delete('/api/lists/:id', async (c) => {
+  const { client, list } = getHandlers(c);
+  await client.initialize();
+  return list.deleteList(c);
+});
+
+app.get('/api/lists/:id/members', async (c) => {
+  const { client, list } = getHandlers(c);
+  await client.initialize();
+  return list.getListMembers(c);
+});
+
+// ---- 通知 ----
+app.get('/api/notifications', async (c) => {
+  const { client, notification } = getHandlers(c);
+  await client.initialize();
+  return notification.getNotifications(c);
+});
+
+// ---- 投票 ----
+app.post('/api/tweet/:id/vote', async (c) => {
+  const { client, poll } = getHandlers(c);
+  await client.initialize();
+  return poll.vote(c);
+});
+
+// ---- スペース ----
+app.get('/api/spaces/:id', async (c) => {
+  const { client, space } = getHandlers(c);
+  await client.initialize();
+  return space.getSpace(c);
+});
+
+app.get('/api/spaces/search', async (c) => {
+  const { client, space } = getHandlers(c);
+  await client.initialize();
+  return space.searchSpaces(c);
 });
 
 // ---- DM ----
@@ -191,7 +294,26 @@ app.post('/api/dm', async (c) => {
   return dm.sendDM(c);
 });
 
-// ---- Cron ジョブ（HTTP 経由の手動実行用）----
+app.get('/api/dm/conversations', async (c) => {
+  const { client, dm } = getHandlers(c);
+  await client.initialize();
+  return dm.getConversations(c);
+});
+
+app.get('/api/dm/conversation/:id', async (c) => {
+  const { client, dm } = getHandlers(c);
+  await client.initialize();
+  return dm.getConversation(c);
+});
+
+// ---- トレンド ----
+app.get('/api/trends', async (c) => {
+  const { client, trends } = getHandlers(c);
+  await client.initialize();
+  return trends.getTrends(c);
+});
+
+// ---- Cron ジョブ ----
 app.post('/api/cron/trends', async (c) => {
   const { client, cron } = getHandlers(c);
   await client.initialize();
@@ -226,7 +348,5 @@ app.all('*', (c) => {
 });
 
 // ---- Exports ----
-// Pages Functions → import { app }
-// Worker → export default { fetch: app.fetch }
 export { app };
 export default app.fetch;

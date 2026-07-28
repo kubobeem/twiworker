@@ -1,71 +1,49 @@
 /* ======================================================
-   twiworker — スケジュール管理
+   twiworker v0.2.0 — スケジュール管理
    ====================================================== */
 
-registerPage('schedule', function initSchedulePage() {
+registerPage('schedule', function initSchedule() {
   const container = document.getElementById('page-schedule');
   if (!container) return;
 
   container.innerHTML = `
     <div class="page-header">
-      <h1>📅 スケジュール管理</h1>
-      <p>予約ツイートの作成と管理</p>
+      <h1>📅 スケジュール</h1>
     </div>
-
-    <div class="card" style="margin-bottom: 20px;">
-      <div class="card-header">
-        <h3>📝 予約ツイートを作成</h3>
-      </div>
-      <div class="form-group">
-        <label>ツイート内容</label>
-        <textarea id="schedule-text" class="form-textarea" placeholder="ツイート内容" maxlength="280"></textarea>
-        <div class="char-count" id="schedule-char-count">0 / 280</div>
-      </div>
-      <div class="form-group">
-        <label>予約日時</label>
-        <input type="datetime-local" id="schedule-datetime" class="form-input">
-      </div>
-      <button class="btn btn-primary" id="schedule-create-btn">📅 予約する</button>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h3>📋 予約一覧</h3>
-        <button class="btn btn-secondary btn-sm" id="schedule-refresh-btn">🔄 更新</button>
-      </div>
-      <div id="schedule-list">
-        <p style="color: var(--text-muted); text-align: center; padding: 40px;">予約ツイートはまだありません</p>
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <textarea id="schedule-text" class="form-textarea" placeholder="予約するツイート内容" maxlength="280" style="min-height:80px"></textarea>
+      <div class="char-count" id="schedule-char-count">0 / 280</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input type="datetime-local" id="schedule-datetime" class="form-input" style="flex:1">
+        <button class="btn btn-primary" id="schedule-create-btn">📅 予約</button>
       </div>
     </div>
-  `;
+    <div id="schedule-list" class="tweet-list">
+      <p style="text-align:center;padding:40px;color:var(--text-muted)">予約ツイートはまだありません</p>
+    </div>`;
 
+  // 文字数カウント
   document.getElementById('schedule-text').addEventListener('input', () => {
     const len = document.getElementById('schedule-text').value.length;
-    const count = document.getElementById('schedule-char-count');
-    count.textContent = `${len} / 280`;
-    count.className = `char-count${len > 260 ? ' warning' : ''}${len >= 280 ? ' error' : ''}`;
+    const cc = document.getElementById('schedule-char-count');
+    cc.textContent = `${len} / 280`;
+    cc.className = `char-count${len > 260 ? ' warning' : ''}${len >= 280 ? ' error' : ''}`;
   });
 
+  // 予約作成
   document.getElementById('schedule-create-btn').addEventListener('click', async () => {
     const text = document.getElementById('schedule-text').value.trim();
     const datetime = document.getElementById('schedule-datetime').value;
-
-    if (!text) {
-      showToast('エラー', 'ツイート内容を入力してください', 'error');
-      return;
-    }
-    if (!datetime) {
-      showToast('エラー', '予約日時を設定してください', 'error');
-      return;
-    }
+    if (!text) return showToast('エラー', 'ツイート内容を入力してください', 'error');
+    if (!datetime) return showToast('エラー', '日時を設定してください', 'error');
 
     try {
       await api('POST', '/api/tweet', { text, schedule_at: new Date(datetime).toISOString() });
-      showToast('予約しました', datetime, 'success');
+      showToast('予約しました', new Date(datetime).toLocaleString('ja-JP'), 'success');
       document.getElementById('schedule-text').value = '';
       document.getElementById('schedule-char-count').textContent = '0 / 280';
     } catch (err) {
-      showToast('予約に失敗しました', err.message, 'error');
+      showToast('予約失敗', err.message, 'error');
     }
   });
 });

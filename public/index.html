@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>twiworker — ダッシュボード</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>twiworker</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐦</text></svg>">
 </head>
@@ -23,157 +23,165 @@
       <div class="disclaimer-modal-body">
         <div class="disclaimer-item">
           <span class="disclaimer-badge">01</span>
-          <div>
-            <strong>教育・研究目的</strong>
-            <p>本ソフトウェアは学術的調査・研究のために開発・提供されています。商用目的での使用を意図していません。</p>
-          </div>
+          <div><strong>教育・研究目的</strong><p>本ソフトウェアは学術的調査・研究のために提供されています。</p></div>
         </div>
         <div class="disclaimer-item">
           <span class="disclaimer-badge">02</span>
-          <div>
-            <strong>X Corp. とは無関係</strong>
-            <p>本ソフトウェアは X Corp.（旧Twitter）の公式製品ではなく、公認・承認・支援されたものではありません。</p>
-          </div>
+          <div><strong>X Corp. とは無関係</strong><p>公式製品ではなく、公認・承認されたものではありません。</p></div>
         </div>
         <div class="disclaimer-item">
           <span class="disclaimer-badge">03</span>
-          <div>
-            <strong>自己責任</strong>
-            <p>本ソフトウェアの使用により生じたいかなる損害、データ損失、アカウント停止についても、開発者は一切の責任を負いません。</p>
-          </div>
+          <div><strong>自己責任</strong><p>使用により生じた損害について開発者は責任を負いません。</p></div>
         </div>
         <div class="disclaimer-item">
           <span class="disclaimer-badge">04</span>
-          <div>
-            <strong>利用規約の遵守</strong>
-            <p>利用者は X Corp. の<a href="https://x.com/tos" target="_blank" rel="noopener">利用規約</a>および<a href="https://help.twitter.com/rules-and-policies/twitter-automation" target="_blank" rel="noopener">自動化ルール</a>を遵守する責任を負います。</p>
-          </div>
+          <div><strong>利用規約の遵守</strong><p>X Corp. の<a href="https://x.com/tos" target="_blank" rel="noopener">利用規約</a>を遵守してください。</p></div>
         </div>
         <div class="disclaimer-item">
           <span class="disclaimer-badge">05</span>
-          <div>
-            <strong>アカウント停止のリスク</strong>
-            <p>内部APIを使用することは X Corp. のポリシーに違反する可能性があり、アカウント停止につながるリスクがあります。</p>
-          </div>
+          <div><strong>アカウント停止リスク</strong><p>内部API使用によりアカウント停止のリスクがあります。</p></div>
         </div>
         <div class="disclaimer-item">
           <span class="disclaimer-badge">06</span>
-          <div>
-            <strong>クッキーの取扱い</strong>
-            <p>認証クッキーは機密情報です。第三者と共有したり、公開リポジトリにコミットしないでください。</p>
-          </div>
+          <div><strong>クッキーの取扱い</strong><p>認証クッキーは機密情報です。公開しないでください。</p></div>
         </div>
         <div class="disclaimer-item">
           <span class="disclaimer-badge">07</span>
-          <div>
-            <strong>無保証</strong>
-            <p>本ソフトウェアは「現状のまま（AS-IS）」で提供され、明示的または黙示的な一切の保証を行いません。</p>
-          </div>
+          <div><strong>無保証</strong><p>「現状のまま」提供、一切の保証なし。</p></div>
         </div>
       </div>
       <div class="disclaimer-modal-footer">
         <p class="disclaimer-modal-warning">上記の内容を理解し、同意した上で利用を開始します</p>
-        <button class="btn btn-primary btn-lg" id="disclaimer-agree-btn" style="width:100%">
-          ✅ 同意して利用を開始する
-        </button>
-        <p style="margin-top:10px;font-size:12px;color:var(--text-muted);opacity:0.7">
-          <span style="cursor:pointer;text-decoration:underline" id="disclaimer-decline-btn" title="Escape">
-            ✖ 同意しない（このページを閉じてください）
-          </span>
+        <button class="btn btn-primary btn-lg" id="disclaimer-agree-btn" style="width:100%">✅ 同意して利用を開始する</button>
+        <p style="margin-top:10px;font-size:13px;color:var(--text-muted)">
+          <span style="cursor:pointer;text-decoration:underline" id="disclaimer-decline-btn">✖ 同意しない</span>
         </p>
-        <p class="disclaimer-modal-note">この画面は一度しか表示されません。設定ページからいつでも再確認できます。</p>
+        <p class="disclaimer-modal-note">設定ページからいつでも再確認・取り消しができます</p>
       </div>
     </div>
   </div>
 
-  <!-- サイドバー -->
-  <nav class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      twiworker <span class="badge">β</span>
-    </div>
-    <div class="sidebar-status" id="sidebar-status">
-      <span class="dot"></span>
-      <span>接続確認中...</span>
-    </div>
-    <ul class="nav-list">
-      <li class="nav-item active" data-page="dashboard">
-        <span class="icon">📊</span> ダッシュボード
-      </li>
-      <li class="nav-item" data-page="compose">
-        <span class="icon">✍️</span> ツイート投稿 <span style="margin-left:auto;font-size:11px;color:var(--text-muted);">N</span>
-      </li>
-      <li class="nav-item" data-page="search">
-        <span class="icon">🔍</span> 検索 <span style="margin-left:auto;font-size:11px;color:var(--text-muted);">/</span>
-      </li>
-      <li class="nav-item" data-page="timeline">
-        <span class="icon">📰</span> タイムライン
-      </li>
-      <li class="nav-item" data-page="dm">
-        <span class="icon">✉️</span> DM
-      </li>
-      <li class="nav-item" data-page="schedule">
-        <span class="icon">📅</span> スケジュール
-      </li>
-      <li class="nav-item" data-page="trends">
-        <span class="icon">📈</span> トレンド
-      </li>
-      <li class="nav-item" data-page="settings">
-        <span class="icon">⚙️</span> 設定
-      </li>
-    </ul>
-  </nav>
+  <!-- 3カラムレイアウト -->
+  <div class="app-wrapper">
 
-  <!-- メインコンテンツ -->
-  <main class="main-content">
-    <div id="page-dashboard" class="page-content">
-      <div class="page-header">
-        <h1>📊 ダッシュボード</h1>
-        <p>twiworker の運用状態を確認できます</p>
+    <!-- ===== 左カラム: ナビゲーション ===== -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <a href="#" onclick="navigateTo('timeline');return false" title="twiworker">🐦</a>
       </div>
-      <div id="stats-container"><div class="loading"><div class="spinner"></div>読み込み中...</div></div>
-      <div id="recent-tweets-section">
-        <div class="card">
-          <div class="card-header"><h3><span class="icon">📝</span>最近のツイート</h3></div>
-          <div id="recent-tweets-list" class="tweet-list"><div class="loading"><div class="spinner"></div>読み込み中...</div></div>
+
+      <div class="sidebar-status" id="sidebar-status">
+        <span class="dot"></span>
+        <span>接続確認中...</span>
+      </div>
+
+      <ul class="nav-list">
+        <li class="nav-item active" data-page="timeline">
+          <span class="nav-icon">🏠</span><span>ホーム</span>
+        </li>
+        <li class="nav-item" data-page="search">
+          <span class="nav-icon">🔍</span><span>探索</span>
+        </li>
+        <li class="nav-item" data-page="notifications">
+          <span class="nav-icon">🔔</span><span>通知</span>
+        </li>
+        <li class="nav-item" data-page="dm">
+          <span class="nav-icon">✉️</span><span>DM</span>
+        </li>
+        <li class="nav-item" data-page="lists">
+          <span class="nav-icon">📋</span><span>リスト</span>
+        </li>
+        <li class="nav-item" data-page="bookmarks">
+          <span class="nav-icon">🔖</span><span>ブックマーク</span>
+        </li>
+        <li class="nav-item" data-page="profile">
+          <span class="nav-icon">👤</span><span>プロフィール</span>
+        </li>
+        <li class="nav-item" data-page="compose">
+          <span class="nav-icon">✍️</span><span>ツイート</span>
+        </li>
+        <li class="nav-item" data-page="schedule">
+          <span class="nav-icon">📅</span><span>スケジュール</span>
+        </li>
+        <li class="nav-item" data-page="settings">
+          <span class="nav-icon">⚙️</span><span>設定</span>
+        </li>
+      </ul>
+
+      <button class="sidebar-tweet-btn" id="sidebar-tweet-btn">✨ <span>ポストする</span></button>
+
+      <div class="sidebar-account" id="sidebar-account">
+        <div class="acc-avatar">U</div>
+        <div class="acc-info">
+          <div class="acc-name" id="acc-name">未接続</div>
+          <div class="acc-handle" id="acc-handle">@</div>
         </div>
       </div>
-    </div>
+    </nav>
 
-    <div id="page-compose" class="page-content" style="display:none"></div>
-    <div id="page-search" class="page-content" style="display:none"></div>
-    <div id="page-timeline" class="page-content" style="display:none"></div>
-    <div id="page-dm" class="page-content" style="display:none"></div>
-    <div id="page-schedule" class="page-content" style="display:none"></div>
-    <div id="page-trends" class="page-content" style="display:none"></div>
-    <div id="page-settings" class="page-content" style="display:none"></div>
-  </main>
+    <!-- ===== 中央カラム: メインコンテンツ ===== -->
+    <main class="main-content" id="main-content">
+      <!-- タイムラインページ -->
+      <div id="page-timeline" class="page-content">
+        <div class="page-header">
+          <h1>ホーム</h1>
+        </div>
+        <div id="timeline-tweets" class="tweet-list">
+          <div class="loading"><div class="spinner"></div>読み込み中...</div>
+        </div>
+      </div>
 
-  <!-- キーボードショートカットヒント -->
-  <div class="shortcut-hint" id="shortcut-hint">
-    <span><span class="kbd">N</span> 新規ツイート</span>
-    <span><span class="kbd">/</span> 検索</span>
-    <span><span class="kbd">1-8</span> ページ切替</span>
-    <span><span class="kbd">R</span> 更新</span>
+      <div id="page-search" class="page-content" style="display:none"></div>
+      <div id="page-notifications" class="page-content" style="display:none"></div>
+      <div id="page-dm" class="page-content" style="display:none"></div>
+      <div id="page-lists" class="page-content" style="display:none"></div>
+      <div id="page-bookmarks" class="page-content" style="display:none"></div>
+      <div id="page-profile" class="page-content" style="display:none"></div>
+      <div id="page-compose" class="page-content" style="display:none"></div>
+      <div id="page-schedule" class="page-content" style="display:none"></div>
+      <div id="page-settings" class="page-content" style="display:none"></div>
+    </main>
+
+    <!-- ===== 右カラム: ウィジェット ===== -->
+    <aside class="right-column" id="right-column">
+      <!-- 検索 -->
+      <div class="search-widget">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="right-search-input" placeholder="検索" onfocus="navigateTo('search')">
+      </div>
+
+      <!-- トレンド -->
+      <div class="trends-widget">
+        <div class="trends-widget-header">📈 トレンド</div>
+        <div class="trends-tabs">
+          <div class="trends-tab active" data-woeid="1" onclick="loadRightTrends(1,this)">🌍 全世界</div>
+          <div class="trends-tab" data-woeid="23424856" onclick="loadRightTrends(23424856,this)">🗾 日本</div>
+        </div>
+        <div id="right-trends-list">
+          <div class="loading" style="padding:24px"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- 免責事項 -->
+      <footer class="disclaimer-footer">
+        <p>⚠️ <strong>教育・研究目的</strong> — X Corp.とは無関係</p>
+        <p>自己責任でご利用ください | <a href="#" onclick="navigateTo('settings');return false">⚙️ 設定</a></p>
+        <p style="font-size:10px;margin-top:4px;opacity:0.6">twiworker v0.2.0 🐦</p>
+      </footer>
+    </aside>
+
   </div>
 
   <script src="/app.js"></script>
-  <script src="/pages/dashboard.js"></script>
-  <script src="/pages/compose.js"></script>
-  <script src="/pages/search.js"></script>
   <script src="/pages/timeline.js"></script>
+  <script src="/pages/search.js"></script>
+  <script src="/pages/notifications.js"></script>
   <script src="/pages/dm.js"></script>
+  <script src="/pages/lists.js"></script>
+  <script src="/pages/bookmarks.js"></script>
+  <script src="/pages/profile.js"></script>
+  <script src="/pages/compose.js"></script>
   <script src="/pages/schedule.js"></script>
-  <script src="/pages/trends.js"></script>
   <script src="/pages/settings.js"></script>
-
-  <!-- フッター（免責事項） -->
-  <footer class="disclaimer-footer">
-    <div class="disclaimer-content">
-      <p><strong>⚠️ 教育・研究目的</strong> — 本ソフトウェアは学術的調査・研究のために提供されています。X Corp.（旧Twitter）とは一切関係ありません。</p>
-      <p><strong>自己責任</strong> — 利用により生じたいかなる損害・アカウント停止についても開発者は責任を負いません。</p>
-      <p><strong>利用規約</strong> — 利用者はX Corp.の<a href="https://x.com/tos" target="_blank" rel="noopener">利用規約</a>を遵守する責任を負います。</p>
-      <p class="disclaimer-footer-note">twiworker ｜ 非公式Twitterクライアント ｜ For Educational Purposes Only</p>
-    </div>
-  </footer>
 </body>
 </html>

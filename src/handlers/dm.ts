@@ -1,5 +1,5 @@
 /**
- * DM ハンドラー
+ * twiworker v0.2.0 — DM ハンドラー
  */
 import { Context } from 'hono';
 import type { Env, DM } from '../types';
@@ -32,11 +32,30 @@ export class DmHandler {
 
     try {
       await this.client.sendDM(user_id, text);
-      // D1 に送信ログを記録（非同期でエラーは無視）
       this.d1.logDm(`out_${Date.now()}`, 0, user_id, '', text, 'out').catch(() => {});
       return c.json({ success: true, data: { sent: true } });
     } catch (err: any) {
       return c.json({ success: false, error: { code: 'dm_error', message: err.message } }, 500);
     }
+  }
+
+  /**
+   * DM会話一覧を取得
+   */
+  async getConversations(c: Context<{ Bindings: Env }>) {
+    const conversations = await this.client.getDMConversations();
+    return c.json({ success: true, data: { count: conversations.length, conversations } });
+  }
+
+  /**
+   * DM会話のメッセージを取得
+   */
+  async getConversation(c: Context<{ Bindings: Env }>) {
+    const convId = c.req.param('id');
+    if (!convId) {
+      return c.json({ success: false, error: { code: 'validation_error', message: 'conversation id is required' } }, 400);
+    }
+    const messages = await this.client.getDMConversation(convId);
+    return c.json({ success: true, data: { conversation_id: convId, count: messages.length, messages } });
   }
 }

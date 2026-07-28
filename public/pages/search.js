@@ -1,104 +1,79 @@
 /* ======================================================
-   twiworker — 検索（無限スクロール対応）
+   twiworker v0.2.0 — 探索（検索）
    ====================================================== */
 
-registerPage('search', function initSearchPage() {
+registerPage('search', function initSearch() {
   const container = document.getElementById('page-search');
   if (!container) return;
 
   container.innerHTML = `
     <div class="page-header">
-      <h1>🔍 ツイート検索</h1>
-      <p>キーワードで検索（無限スクロール）</p>
+      <h1>🔍 探索</h1>
     </div>
-
-    <div class="card" style="margin-bottom: 20px;">
-      <div class="form-group">
-        <label>検索キーワード</label>
-        <input type="text" id="search-query" class="form-input" placeholder="例: Cloudflare Workers">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+      <div style="position:relative">
+        <input type="text" id="search-query" class="form-input" placeholder="キーワードを検索" style="border-radius:var(--radius-full);padding-left:44px;font-size:16px">
+        <span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text-muted)">🔍</span>
       </div>
-      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-        <div class="form-group" style="flex: 1; min-width: 120px;">
-          <label>タイプ</label>
-          <select id="search-type" class="form-select">
-            <option value="top">Top</option>
-            <option value="latest">最新</option>
-            <option value="media">メディア</option>
-          </select>
-        </div>
-        <div class="form-group" style="flex: 1; min-width: 100px;">
-          <label>言語</label>
-          <select id="search-lang" class="form-select">
-            <option value="">すべて</option>
-            <option value="ja">日本語</option>
-            <option value="en">英語</option>
-          </select>
-        </div>
-        <div class="form-group" style="flex: 0 0 80px;">
-          <label>件数</label>
-          <select id="search-count" class="form-select">
-            <option value="10">10</option>
-            <option value="20" selected>20</option>
-            <option value="50">50</option>
-          </select>
-        </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-sm ${'btn-primary'}" id="search-type-top" onclick="setSearchType('top')">Top</button>
+        <button class="btn btn-sm btn-secondary" id="search-type-latest" onclick="setSearchType('latest')">最新</button>
+        <button class="btn btn-sm btn-secondary" id="search-type-media" onclick="setSearchType('media')">メディア</button>
+        <select id="search-lang" class="form-select" style="width:auto;margin-left:auto;padding:6px 12px;font-size:13px">
+          <option value="">すべて</option>
+          <option value="ja">日本語</option>
+          <option value="en">英語</option>
+        </select>
       </div>
-      <button class="btn btn-primary" id="search-btn" style="width: 100%; margin-top: 8px;">🔍 検索</button>
     </div>
+    <div id="search-results" class="tweet-list"></div>`;
 
-    <div id="search-results">
-      <div class="tweet-list" id="search-tweet-list"></div>
-    </div>
-  `;
+  let searchType = 'top';
+  let cleanup = null;
 
-  let currentCleanup = null;
+  window.setSearchType = function(type) {
+    searchType = type;
+    ['top','latest','media'].forEach(t => {
+      const btn = document.getElementById(`search-type-${t}`);
+      if (btn) btn.className = `btn btn-sm ${t === type ? 'btn-primary' : 'btn-secondary'}`;
+    });
+    doSearch();
+  };
 
-  document.getElementById('search-btn').addEventListener('click', async () => {
+  async function doSearch() {
     const query = document.getElementById('search-query').value.trim();
-    if (!query) {
-      showToast('エラー', '検索キーワードを入力してください', 'error');
-      return;
-    }
-
-    const type = document.getElementById('search-type').value;
-    const lang = document.getElementById('search-lang').value;
-    const count = document.getElementById('search-count').value;
-
-    const resultsContainer = document.getElementById('search-tweet-list');
-    resultsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>検索中...</div>';
-
-    // 前回の無限スクロールをクリーンアップ
-    if (currentCleanup) currentCleanup();
+    if (!query) return;
+    const results = document.getElementById('search-results');
+    results.innerHTML = '<div class="loading"><div class="spinner"></div>検索中...</div>';
+    if (cleanup) cleanup();
 
     try {
-      const params = new URLSearchParams({ q: query, type, count });
+      const lang = document.getElementById('search-lang').value;
+      const params = new URLSearchParams({ q: query, type: searchType, count: '20' });
       if (lang) params.set('lang', lang);
-
       const data = await api('GET', `/api/search?${params}`);
-      resultsContainer.innerHTML = '';
-
-      if (data.tweets.length === 0) {
-        resultsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px;">検索結果が見つかりませんでした</p>';
+      results.innerHTML = '';
+      if (!data.tweets?.length) {
+        results.innerHTML = '<p style="text-align:center;padding:40px;color:var(--text-muted)">検索結果が見つかりませんでした</p>';
         return;
       }
-
-      data.tweets.forEach(tweet => resultsContainer.appendChild(renderTweet(tweet)));
-
-      // 無限スクロール設定
+      data.tweets.forEach(t => results.appendChild(renderTweet(t)));
       if (data.cursor) {
-        currentCleanup = setupInfiniteScroll(resultsContainer, async (cur) => {
-          const p = new URLSearchParams({ q: query, type, count, cursor: cur });
+        cleanup = setupInfiniteScroll(results, async (cur) => {
+          const p = new URLSearchParams({ q: query, type: searchType, count: '20', cursor: cur });
           if (lang) p.set('lang', lang);
           return await api('GET', `/api/search?${p}`);
         });
       }
     } catch (err) {
-      resultsContainer.innerHTML = `
-        <div class="error-state">
-          <span class="icon">⚠️</span>
-          <h3>検索に失敗しました</h3>
-          <p>${esc(err.message)}</p>
-        </div>`;
+      results.innerHTML = `<div class="error-state"><span class="icon">⚠️</span><h3>検索失敗</h3><p>${esc(err.message)}</p></div>`;
     }
+  }
+
+  document.getElementById('search-query').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doSearch();
   });
+
+  // フォーカスしたら検索実行
+  setTimeout(() => document.getElementById('search-query')?.focus(), 200);
 });
